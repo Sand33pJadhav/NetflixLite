@@ -72,3 +72,67 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 
 Made by Sandeep Vilas Jadhav
+
+
+
+import javax.jms.*;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import java.util.Hashtable;
+
+public class QueueReceiverExample {
+
+    public static void main(String[] args) {
+        String queueManagerName = "YourQueueManager";
+        String queueName = "YourQueue";
+        String connectionFactoryName = "YourConnectionFactory";
+        
+        // Set up the environment for creating the initial context
+        Hashtable<String, String> env = new Hashtable<>();
+        env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.fscontext.RefFSContextFactory");
+        env.put(Context.PROVIDER_URL, "file:///C:/JNDI-Directory");  // Replace with your JNDI directory
+
+        try {
+            // Create the initial context
+            Context context = new InitialContext(env);
+
+            // Lookup the connection factory and queue
+            QueueConnectionFactory factory = (QueueConnectionFactory) context.lookup(connectionFactoryName);
+            Queue queue = (Queue) context.lookup(queueName);
+
+            // Create a connection
+            QueueConnection connection = factory.createQueueConnection();
+            connection.start();
+
+            // Create a session
+            QueueSession session = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+
+            // Create a receiver
+            QueueReceiver receiver = session.createReceiver(queue);
+
+            // Receive a message
+            Message message = receiver.receive(1000);  // Wait up to 1 second for a message
+
+            if (message != null) {
+                if (message instanceof TextMessage) {
+                    TextMessage textMessage = (TextMessage) message;
+                    System.out.println("Received message: " + textMessage.getText());
+                } else {
+                    System.out.println("Received non-text message");
+                }
+            } else {
+                System.out.println("No message received within the given timeout");
+            }
+
+            // Clean up
+            receiver.close();
+            session.close();
+            connection.close();
+            context.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
